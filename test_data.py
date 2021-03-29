@@ -1,18 +1,22 @@
 import json
 import time
 
+from utils import PerfTest
+
 class TestData():
     test_data = []
     # Seconds
     time_frame = 20
+    # Time it takes to capture a frame
+    capture_time = 0.27
     # Reads per second
-    resolution = 0.2 
+    resolution = 1
     rep_interval = 5
     rep_length = 2.5
 
     processed_data = []
     data_size = 0
-    # rep window size in seconds
+    # Rep window size in seconds
     window_size = 5
 
     def __init__(self, tracker, time_frame = None):
@@ -30,7 +34,7 @@ class TestData():
 
         for i in range(0, self.data_size):
             if rep_started and i == rep_start_time + (rep_length / 2):
-                print('%d / %d' % (rep_count, (int)(self.data_size / (rep_interval + rep_length))))
+                print('%d / %d' % (rep_count, (int)(self.data_size / rep_interval) - 1))
             if i != 0 and i % rep_interval == 0:
                 print('Start Rep')
                 rep_count += 1
@@ -44,7 +48,7 @@ class TestData():
             data_piece['is_rep'] = int(rep_started)
             self.test_data.append(data_piece)
 
-            time.sleep(self.resolution)
+            time.sleep(self.resolution - self.capture_time)
 
 
     def getDataPiece(self):
