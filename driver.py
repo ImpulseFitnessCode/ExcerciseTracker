@@ -1,4 +1,5 @@
 import time
+import numpy as np
 
 from model import Model
 
@@ -7,9 +8,9 @@ class Driver():
     tracker = None
     capture_pose = None
     # Reads per second
-    resolution = 0.2
+    resolution = 0.5
 
-    window = [[] for _ in range(0, 2)]
+    window = [[] for _ in range(0, 12)]
     # rep window size in seconds
     window_size = 5 / resolution
 
@@ -31,7 +32,11 @@ class Driver():
     def check_model(self):
         if len(self.window[0]) >= self.window_size:
             pred = self.model.predict(self.window)
-            print(pred)
+            self.print_prediction(pred)
+    
+    def print_prediction(self, prediction):
+        pred_str = 'Overhead Press' if prediction[0] > 0.8 else 'None'
+        print('Exercise: ' + pred_str)
 
     def add_to_window(self, item):
         for i, param in enumerate(self.window):
@@ -42,4 +47,12 @@ class Driver():
 
 
     def get_data_piece(self):
-        return next(self.capture_pose)[0][0]
+        pose = next(self.capture_pose)[0]
+        return np.array([ 
+            pose[5],
+            pose[6],
+            pose[7],
+            pose[8],
+            pose[9],
+            pose[10],
+        ]).flatten()

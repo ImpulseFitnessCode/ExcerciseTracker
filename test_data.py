@@ -1,17 +1,18 @@
 import json
 import time
+import os
 
 from utils import PerfTest
 
 class TestData():
     test_data = []
     # Seconds
-    time_frame = 20
+    time_frame = 40
     # Time it takes to capture a frame
     capture_time = 0.27
     # Reads per second
-    resolution = 1
-    rep_interval = 5
+    resolution = 0.5
+    rep_interval = 8
     rep_length = 2.5
 
     processed_data = []
@@ -33,7 +34,7 @@ class TestData():
         rep_count = 0
 
         for i in range(0, self.data_size):
-            if rep_started and i == rep_start_time + (rep_length / 2):
+            if rep_started and i == rep_start_time + round(rep_length / 2):
                 print('%d / %d' % (rep_count, (int)(self.data_size / rep_interval) - 1))
             if i != 0 and i % rep_interval == 0:
                 print('Start Rep')
@@ -50,13 +51,16 @@ class TestData():
 
             time.sleep(self.resolution - self.capture_time)
 
-
     def getDataPiece(self):
+        pose = next(self.capture_pose)[0]
         return {
-            'nosePose': next(self.capture_pose)[0][0]
+            'leftShoulder': pose[5],
+            'rightShoulder': pose[6],
+            'leftElbow': pose[7],
+            'rightElbow': pose[8],
+            'leftWrist': pose[9],
+            'rightWrist': pose[10],
         }
-
-
 
     def processTestData(self):
         print('Post processing data...')
@@ -76,8 +80,18 @@ class TestData():
 
             processed_window = {
                 'expected': int(expected),
-                'nosePoseY': [read['nosePose'][0] for read in window],
-                'nosePoseX': [read['nosePose'][1] for read in window],
+                'leftShoulderY': [read['leftShoulder'][0] for read in window],
+                'leftShoulderX': [read['leftShoulder'][1] for read in window],
+                'leftElbowY': [read['leftElbow'][1] for read in window],
+                'leftElbowX': [read['leftElbow'][1] for read in window],
+                'leftWristY': [read['leftWrist'][1] for read in window],
+                'leftWristX': [read['leftWrist'][1] for read in window],
+                'rightShoulderY': [read['rightShoulder'][0] for read in window],
+                'rightShoulderX': [read['rightShoulder'][1] for read in window],
+                'rightElbowY': [read['rightElbow'][1] for read in window],
+                'rightElbowX': [read['rightElbow'][1] for read in window],
+                'rightWristY': [read['rightWrist'][1] for read in window],
+                'rightWristX': [read['rightWrist'][1] for read in window],
             }
             self.processed_data.append(processed_window)
 
@@ -86,7 +100,16 @@ class TestData():
         print('Processing took: ' + str(time.time() - t1) + ' Seconds')
 
 
-    def writeTestData(self, filename='training_data/train.json'):
-        with open(filename, 'w') as file:
+    def writeTestData(self, training_dir='./training_data'):
+        base_filename = 'train-'
+        train_num = 0
+        for _, _, filenames in os.walk('training_data'):
+            get_file_num = lambda file: int(file[len(base_filename):file.index('.')])
+            if len(filenames):
+                train_num = max(get_file_num(file) for file in filenames)
+        
+        new_filename = '{0}{1}.json'.format(base_filename, train_num + 1)
+
+        with open('{0}/{1}'.format(training_dir, new_filename), 'w') as file:
             json.dump(self.processed_data, file)
-        print('Data written to train.json')
+        print('Data written to ' + new_filename)
